@@ -16,18 +16,19 @@ func TestScaleUp(t *testing.T) {
 	// Scale up replicas until we reach the max (5).
 	// Scale up again and assert that we get an error back when trying to scale up replicas pass the max
 	err := p.ScaleUp()
-	deployment, _ := p.Client.Deployments("test").Get("test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Nil(t, err)
-	assert.Equal(t, int32(4), deployment.Spec.Replicas)
+	assert.Equal(t, int32(4), scaleSpec.Spec.Replicas)
+
 	err = p.ScaleUp()
 	assert.Nil(t, err)
-	deployment, _ = p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(5), deployment.Spec.Replicas)
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
+	assert.Equal(t, int32(5), scaleSpec.Spec.Replicas)
 
 	err = p.ScaleUp()
 	assert.NotNil(t, err)
-	deployment, _ = p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(5), deployment.Spec.Replicas)
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
+	assert.Equal(t, int32(5), scaleSpec.Spec.Replicas)
 }
 
 func TestScaleDown(t *testing.T) {
@@ -35,26 +36,32 @@ func TestScaleDown(t *testing.T) {
 
 	err := p.ScaleDown()
 	assert.Nil(t, err)
-	deployment, _ := p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(2), deployment.Spec.Replicas)
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
+	assert.Equal(t, int32(2), scaleSpec.Spec.Replicas)
+
 	err = p.ScaleDown()
 	assert.Nil(t, err)
-	deployment, _ = p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(1), deployment.Spec.Replicas)
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
+	assert.Equal(t, int32(1), scaleSpec.Spec.Replicas)
 
 	err = p.ScaleDown()
 	assert.NotNil(t, err)
-	deployment, _ = p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(1), deployment.Spec.Replicas)
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
+	assert.Equal(t, int32(1), scaleSpec.Spec.Replicas)
 }
 
 type MockDeployment struct {
 	client *MockKubeClient
 }
 
+type MockScale struct {
+	client *MockKubeClient
+}
+
 type MockKubeClient struct {
 	// stores the state of Deployment as if the api server did
 	Deployment *extensions.Deployment
+	Scale      *extensions.Scale
 }
 
 func (m *MockDeployment) Get(name string) (*extensions.Deployment, error) {
@@ -96,10 +103,30 @@ func (m *MockKubeClient) Deployments(namespace string) kclient.DeploymentInterfa
 	}
 }
 
+func (m *MockScale) Get(kind string, deployment string) (*extensions.Scale, error) {
+	return m.client.Scale, nil
+}
+
+func (m *MockScale) Update(kind string, scale *extensions.Scale) (*extensions.Scale, error) {
+	m.client.Scale.Spec.Replicas = scale.Spec.Replicas
+	return m.client.Scale, nil
+}
+
+func (m *MockKubeClient) Scales(namespace string) kclient.ScaleInterface {
+	return &MockScale{
+		client: m,
+	}
+}
+
 func NewMockKubeClient() *MockKubeClient {
 	return &MockKubeClient{
 		Deployment: &extensions.Deployment{
 			Spec: extensions.DeploymentSpec{
+				Replicas: 3,
+			},
+		},
+		Scale: &extensions.Scale{
+			Spec: extensions.ScaleSpec{
 				Replicas: 3,
 			},
 		},
