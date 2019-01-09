@@ -44,8 +44,8 @@ func TestRunReachMinReplicas(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(10 * time.Second)
-	deployment, _ := p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(minPods), deployment.Spec.Replicas, "Number of replicas should be the min")
+	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	assert.Equal(t, int32(minPods), scaleSpec.Spec.Replicas, "Number of replicas should be the min")
 }
 
 func TestRunReachMaxReplicas(t *testing.T) {
@@ -76,8 +76,8 @@ func TestRunReachMaxReplicas(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(10 * time.Second)
-	deployment, _ := p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(maxPods), deployment.Spec.Replicas, "Number of replicas should be the max")
+	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	assert.Equal(t, int32(maxPods), scaleSpec.Spec.Replicas, "Number of replicas should be the max")
 }
 
 func TestRunScaleUpCoolDown(t *testing.T) {
@@ -106,8 +106,8 @@ func TestRunScaleUpCoolDown(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(15 * time.Second)
-	deployment, _ := p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(4), deployment.Spec.Replicas, "Number of replicas should be 4 if cool down for scaling up was obeyed")
+	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	assert.Equal(t, int32(4), scaleSpec.Spec.Replicas, "Number of replicas should be 4 if cool down for scaling up was obeyed")
 }
 
 func TestRunScaleDownCoolDown(t *testing.T) {
@@ -137,8 +137,8 @@ func TestRunScaleDownCoolDown(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(15 * time.Second)
-	deployment, _ := p.Client.Deployments("test").Get("test")
-	assert.Equal(t, int32(2), deployment.Spec.Replicas, "Number of replicas should be 2 if cool down for scaling down was obeyed")
+	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	assert.Equal(t, int32(2), scaleSpec.Spec.Replicas, "Number of replicas should be 2 if cool down for scaling down was obeyed")
 }
 
 type MockDeployment struct {
@@ -148,6 +148,11 @@ type MockDeployment struct {
 type MockKubeClient struct {
 	// stores the state of Deployment as if the api server did
 	Deployment *extensions.Deployment
+	Scale      *extensions.Scale
+}
+
+type MockScale struct {
+	client *MockKubeClient
 }
 
 func (m *MockDeployment) Get(name string) (*extensions.Deployment, error) {
@@ -189,10 +194,30 @@ func (m *MockKubeClient) Deployments(namespace string) kclient.DeploymentInterfa
 	}
 }
 
+func (m *MockScale) Get(kind string, deployment string) (*extensions.Scale, error) {
+	return m.client.Scale, nil
+}
+
+func (m *MockScale) Update(kind string, scale *extensions.Scale) (*extensions.Scale, error) {
+	m.client.Scale.Spec.Replicas = scale.Spec.Replicas
+	return m.client.Scale, nil
+}
+
+func (m *MockKubeClient) Scales(namespace string) kclient.ScaleInterface {
+	return &MockScale{
+		client: m,
+	}
+}
+
 func NewMockKubeClient() *MockKubeClient {
 	return &MockKubeClient{
 		Deployment: &extensions.Deployment{
 			Spec: extensions.DeploymentSpec{
+				Replicas: 3,
+			},
+		},
+		Scale: &extensions.Scale{
+			Spec: extensions.ScaleSpec{
 				Replicas: 3,
 			},
 		},
