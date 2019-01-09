@@ -16,18 +16,18 @@ func TestScaleUp(t *testing.T) {
 	// Scale up replicas until we reach the max (5).
 	// Scale up again and assert that we get an error back when trying to scale up replicas pass the max
 	err := p.ScaleUp()
-	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Nil(t, err)
 	assert.Equal(t, int32(4), scaleSpec.Spec.Replicas)
 
 	err = p.ScaleUp()
 	assert.Nil(t, err)
-	scaleSpec, _ = p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(5), scaleSpec.Spec.Replicas)
 
 	err = p.ScaleUp()
 	assert.NotNil(t, err)
-	scaleSpec, _ = p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(5), scaleSpec.Spec.Replicas)
 }
 
@@ -36,17 +36,17 @@ func TestScaleDown(t *testing.T) {
 
 	err := p.ScaleDown()
 	assert.Nil(t, err)
-	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(2), scaleSpec.Spec.Replicas)
 
 	err = p.ScaleDown()
 	assert.Nil(t, err)
-	scaleSpec, _ = p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(1), scaleSpec.Spec.Replicas)
 
 	err = p.ScaleDown()
 	assert.NotNil(t, err)
-	scaleSpec, _ = p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ = p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(1), scaleSpec.Spec.Replicas)
 }
 

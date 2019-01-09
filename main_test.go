@@ -44,7 +44,7 @@ func TestRunReachMinReplicas(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(10 * time.Second)
-	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(minPods), scaleSpec.Spec.Replicas, "Number of replicas should be the min")
 }
 
@@ -76,7 +76,7 @@ func TestRunReachMaxReplicas(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(10 * time.Second)
-	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(maxPods), scaleSpec.Spec.Replicas, "Number of replicas should be the max")
 }
 
@@ -106,7 +106,7 @@ func TestRunScaleUpCoolDown(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(15 * time.Second)
-	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(4), scaleSpec.Spec.Replicas, "Number of replicas should be 4 if cool down for scaling up was obeyed")
 }
 
@@ -137,7 +137,7 @@ func TestRunScaleDownCoolDown(t *testing.T) {
 	s.Client.SetQueueAttributes(input)
 
 	time.Sleep(15 * time.Second)
-	scaleSpec, _ := p.Client.Scales("test").Get("Pod", "test")
+	scaleSpec, _ := p.Client.Scales("test").Get("Deployment", "test")
 	assert.Equal(t, int32(2), scaleSpec.Spec.Replicas, "Number of replicas should be 2 if cool down for scaling down was obeyed")
 }
 

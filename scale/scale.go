@@ -44,7 +44,7 @@ func NewPodAutoScaler(kubernetesDeploymentName string, kubernetesNamespace strin
 
 func (p *PodAutoScaler) ScaleUp() error {
 	scaleInterface := p.Client.Scales(p.Namespace)
-	scale, err := scaleInterface.Get("Pod", p.Deployment)
+	scale, err := scaleInterface.Get("Deployment", p.Deployment)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get scale from kube server, no scale up occurred")
 	}
@@ -58,7 +58,7 @@ func (p *PodAutoScaler) ScaleUp() error {
 
 	scale.Spec.Replicas = currentReplicas + 1
 
-	scale, err = scaleInterface.Update("Pod", scale)
+	scale, err = scaleInterface.Update("Deployment", scale)
 	if err != nil {
 		return errors.Wrap(err, "Failed to scale up")
 	}
@@ -69,7 +69,7 @@ func (p *PodAutoScaler) ScaleUp() error {
 
 func (p *PodAutoScaler) ScaleDown() error {
 	scaleInterface := p.Client.Scales(p.Namespace)
-	scale, err := scaleInterface.Get("Pod", p.Deployment)
+	scale, err := scaleInterface.Get("Deployment", p.Deployment)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get scale from kube server, no scale up occurred")
 	}
@@ -83,7 +83,7 @@ func (p *PodAutoScaler) ScaleDown() error {
 
 	scale.Spec.Replicas = currentReplicas - 1
 
-	scale, err = scaleInterface.Update("Pod", scale)
+	scale, err = scaleInterface.Update("Deployment", scale)
 	if err != nil {
 		return errors.Wrap(err, "Failed to scale down")
 	}
